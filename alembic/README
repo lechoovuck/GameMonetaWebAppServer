@@ -1,0 +1,7 @@
+Generic single-database configuration.
+
+### Migrations:
+```
+alembic revision --autogenerate -m "Commit message"
+alembic upgrade head
+```

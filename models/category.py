@@ -1,0 +1,15 @@
+from sqlalchemy import Column, Integer, String, Text
+from sqlalchemy.orm import relationship
+from database import Base
+
+
+class Category(Base):
+    __tablename__ = 'categories'
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    type = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    image_url = Column(String, nullable=True)
+
+    subcategories = relationship("Subcategory", back_populates="category")

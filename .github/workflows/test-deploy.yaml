@@ -1,0 +1,32 @@
+name: Test
+on:
+  push:
+    branches:
+      - test
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up SSH for deployment
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SERVER_TEST_SSH_KEY }}" > ~/.ssh/github_key
+          chmod 600 ~/.ssh/github_key
+          ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
+          ssh-keyscan -t rsa ${{ secrets.SERVER_TEST_HOST }} >> ~/.ssh/known_hosts
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/github_key
+
+      - name: Deploy to VPS
+        run: |
+          ssh -i ~/.ssh/github_key -o IdentitiesOnly=yes ${{ secrets.SERVER_TEST_USERNAME }}@${{ secrets.SERVER_TEST_HOST }} << 'EOF'
+            set -e
+            cd /home/sadmin/GameMonetaWebAppServer
+            GIT_SSH_COMMAND="ssh -i /etc/sadmin_keys/github_key -o IdentitiesOnly=yes" git fetch origin
+            git checkout test
+            GIT_SSH_COMMAND="ssh -i /etc/sadmin_keys/github_key -o IdentitiesOnly=yes" git pull origin test
+            echo "${{ secrets.SERVER_TEST_SUDO_PASSWORD }}" | sudo -S systemctl restart gamemoneta-test
+          EOF
